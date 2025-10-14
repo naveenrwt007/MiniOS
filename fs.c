@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <time.h>
 #include "fs.h"
+#include "utils.h"
 
 #define MAX_FILES 100
 #define MAX_CONTENT 2000
@@ -32,8 +33,8 @@ void fs_init() {
                 buffer[bytes] = '\0';
                 fclose(fp);
 
-                files[count] = strdup(entry->d_name);
-                file_data[count] = strdup(buffer);
+                files[count] = safe_strdup(entry->d_name);
+                file_data[count] = safe_strdup(buffer);
                 count++;
             }
         }
@@ -50,7 +51,7 @@ int fs_find(const char *name) {
 
 void fs_write(const char *name, const char *data) {
     int idx = fs_find(name);
-    FILE *fp = fopen(name, "w"); // Save to disk
+    FILE *fp = fopen(name, "w");
     if (fp) {
         fputs(data, fp);
         fclose(fp);
@@ -58,14 +59,14 @@ void fs_write(const char *name, const char *data) {
 
     if (idx >= 0) {
         free(file_data[idx]);
-        file_data[idx] = strdup(data);
+        file_data[idx] = safe_strdup(data);
         printf("File updated.\n");
         return;
     }
     for (int i = 0; i < MAX_FILES; i++) {
         if (!files[i]) {
-            files[i] = strdup(name);
-            file_data[i] = strdup(data);
+            files[i] = safe_strdup(name);
+            file_data[i] = safe_strdup(data);
             printf("File created.\n");
             return;
         }
@@ -96,7 +97,7 @@ void fs_list() {
 void fs_delete(const char *name) {
     int idx = fs_find(name);
     if (idx >= 0) {
-        remove(name); // Delete from disk
+        remove(name);
         free(files[idx]);
         free(file_data[idx]);
         files[idx] = NULL;
@@ -127,10 +128,11 @@ void fs_edit(const char *name) {
         fgets(temp, sizeof(temp), stdin);
         temp[strcspn(temp, "\n")] = 0;
         free(file_data[idx]);
-        file_data[idx] = strdup(temp);
+        file_data[idx] = safe_strdup(temp);
         printf("File updated.\n");
-    } else
+    } else {
         printf("File not found.\n");
+    }
 }
 
 void fs_search(const char *keyword) {
@@ -148,10 +150,9 @@ void fs_search(const char *keyword) {
 void fs_rename(const char *old_name, const char *new_name) {
     int idx = fs_find(old_name);
     if (idx >= 0) {
-        // Rename on disk
         if (rename(old_name, new_name) == 0) {
             free(files[idx]);
-            files[idx] = strdup(new_name);
+            files[idx] = safe_strdup(new_name);
             printf("File renamed.\n");
         } else {
             printf("Rename failed.\n");
@@ -177,7 +178,7 @@ void fs_export_all() {
 void fs_clear_all() {
     for (int i = 0; i < MAX_FILES; i++) {
         if (files[i]) {
-            remove(files[i]); // delete from disk
+            remove(files[i]);
             free(files[i]);
         }
         if (file_data[i]) free(file_data[i]);

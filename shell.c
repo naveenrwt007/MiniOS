@@ -3,6 +3,8 @@
 #include "fs.h"
 #include "history.h"
 #include "utils.h"
+#include "mm.h"
+#include "proc.h"
 
 void shell() {
     char input[100], arg1[100], arg2[200];
@@ -12,23 +14,25 @@ void shell() {
         fgets(input, sizeof(input), stdin);
         input[strcspn(input, "\n")] = 0;
 
-        // Aliases
-        if (!strcmp(input, "rm")) strcpy(input, "delete");
-        else if (!strcmp(input, "cat")) strcpy(input, "read");
-        else if (!strcmp(input, "vi")) strcpy(input, "edit");
-
-        save_history(input);
+        apply_alias(input);           // Modular aliasing
+        save_history(input);         // Track command history
 
         if (!strcmp(input, "help")) {
-            printf("Commands: \nhelp\nls\nwrite\nread\ndelete\nedit\nrename\nsearch\ninfo\nhistory\nclear\nexport\nreset\nexit\n");        } else if (!strcmp(input, "ls"))
+            printf("Commands:\n");
+            printf("help\nls\nwrite\nread\ndelete\nedit\nrename\nsearch\ninfo\nhistory\nclear\nexport\nreset\nmem\nps\nexit\n");
+        } else if (!strcmp(input, "ls")) {
             fs_list();
-        else if (!strcmp(input, "history"))
+        } else if (!strcmp(input, "history")) {
             show_history();
-        else if (!strcmp(input, "clear"))
+        } else if (!strcmp(input, "clear")) {
             clear_screen();
-        else if (!strcmp(input, "exit"))
+        } else if (!strcmp(input, "exit")) {
             break;
-        else if (!strcmp(input, "write")) {
+        } else if (!strcmp(input, "mem")) {
+            mm_status();
+        } else if (!strcmp(input, "ps")) {
+            proc_list();
+        } else if (!strcmp(input, "write")) {
             printf("Filename: ");
             fgets(arg1, sizeof(arg1), stdin);
             arg1[strcspn(arg1, "\n")] = 0;
@@ -65,14 +69,17 @@ void shell() {
             printf("Keyword: ");
             fgets(arg1, sizeof(arg1), stdin);
             arg1[strcspn(arg1, "\n")] = 0;
+
             fs_search(arg1);
         } else if (!strcmp(input, "rename")) {
             printf("Old Filename: ");
             fgets(arg1, sizeof(arg1), stdin);
             arg1[strcspn(arg1, "\n")] = 0;
+
             printf("New Filename: ");
             fgets(arg2, sizeof(arg2), stdin);
             arg2[strcspn(arg2, "\n")] = 0;
+
             fs_rename(arg1, arg2);
         } else if (!strcmp(input, "info")) {
             printf("Filename: ");
@@ -80,11 +87,17 @@ void shell() {
             arg1[strcspn(arg1, "\n")] = 0;
 
             fs_info(arg1);
-        } else if (!strcmp(input, "export"))
+        } else if (!strcmp(input, "export")) {
             printf("Files are already saved to disk automatically.\n");
-        else if (!strcmp(input, "reset"))
+        } else if (!strcmp(input, "reset")) {
             fs_clear_all();
-        else
+        } else {
             printf("Unknown command.\n");
+        }
     }
+}
+
+// Shell as a process task
+void shell_task() {
+    shell();
 }

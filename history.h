@@ -3,5 +3,6 @@
 
 void save_history(const char *cmd);
 void show_history();
+void clear_history();
 
 #endif
