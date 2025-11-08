@@ -135,11 +135,20 @@ void fs_edit(const char *name) {
         char temp[MAX_CONTENT];
         fgets(temp, sizeof(temp), stdin);
         temp[strcspn(temp, "\n")] = 0;
+
         file_data[idx] = safe_strdup(temp);
-        printf("File updated.\n");
-    } else {
+
+        char path[200];
+        snprintf(path, sizeof(path), "./%s", name);
+        FILE *fp = fopen(path, "w");
+        if (fp) {
+            fputs(temp, fp);
+            fclose(fp);
+            printf("File updated.\n");
+        } else
+            printf("Error: Could not write to disk.\n");
+    } else
         printf("File not found.\n");
-    }
 }
 
 void fs_search(const char *keyword) {
