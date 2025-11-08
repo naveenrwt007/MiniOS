@@ -5,6 +5,7 @@
 #include <time.h>
 #include "fs.h"
 #include "utils.h"
+#include <unistd.h>
 
 #define MAX_FILES 100
 #define MAX_CONTENT 2000
@@ -93,6 +94,15 @@ void fs_list() {
     if (!found) printf("No files found.\n");
 }
 
+void cmd_time() {
+    time_t rawtime = time(NULL);
+    rawtime += 19800; 
+    struct tm *tm_info = gmtime(&rawtime);
+    char buffer[64];
+    strftime(buffer, sizeof(buffer), "%H:%M:%S", tm_info);
+    printf("Time (IST): %s\n", buffer);
+}
+
 void fs_delete(const char *name) {
     int idx = fs_find(name);
     if (idx >= 0) {
@@ -178,4 +188,81 @@ void fs_clear_all() {
         file_data[i] = NULL;
     }
     printf("All files cleared from memory and disk.\n");
+}
+
+void fs_touch(const char *name) {
+    FILE *fp = fopen(name, "w");
+    if (fp) {
+        fclose(fp);
+        printf("Empty file created: %s\n", name);
+    } else {
+        printf("Failed to create file: %s\n", name);
+    }
+}
+
+void fs_cat(const char *name) {
+    FILE *fp = fopen(name, "r");
+    if (!fp) {
+        printf("File not found: %s\n", name);
+        return;
+    }
+
+    char buffer[MAX_CONTENT];
+    while (fgets(buffer, sizeof(buffer), fp))
+        printf("%s", buffer);
+    fclose(fp);
+    printf("\n");
+}
+
+void fs_copy(const char *src, const char *dest) {
+    FILE *fp_src = fopen(src, "r");
+    if (!fp_src) {
+        printf("Source file not found: %s\n", src);
+        return;
+    }
+
+    FILE *fp_dest = fopen(dest, "w");
+    if (!fp_dest) {
+        fclose(fp_src);
+        printf("Failed to create destination file: %s\n", dest);
+        return;
+    }
+
+    char buffer[MAX_CONTENT];
+    size_t bytes;
+    while ((bytes = fread(buffer, 1, sizeof(buffer), fp_src)) > 0)
+        fwrite(buffer, 1, bytes, fp_dest);
+
+    fclose(fp_src);
+    fclose(fp_dest);
+    printf("Copied '%s' to '%s'\n", src, dest);
+}
+
+void fs_move(const char *src, const char *dest) {
+    if (rename(src, dest) == 0) {
+        printf("Moved '%s' to '%s'\n", src, dest);
+    } else {
+        printf("Move failed from '%s' to '%s'\n", src, dest);
+    }
+}
+
+void fs_mkdir(const char *dirname) {
+    if (mkdir(dirname, 0755) == 0)
+        printf("Directory created: %s\n", dirname);
+    else
+        perror("mkdir");
+}
+
+void fs_rmdir(const char *dirname) {
+    if (rmdir(dirname) == 0)
+        printf("Directory removed: %s\n", dirname);
+    else
+        perror("rmdir");
+}
+
+void fs_cd(const char *path) {
+    if (chdir(path) == 0)
+        printf("Changed directory to: %s\n", path);
+    else
+        perror("cd");
 }

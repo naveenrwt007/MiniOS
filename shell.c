@@ -18,9 +18,43 @@ void shell() {
         save_history(input);         // Track command history
 
         if (!strcmp(input, "help")) {
-            printf("Commands:\n");
-            printf("help\nls\nwrite\nread\ndelete\nedit\nrename\nsearch\ninfo\nhistory\nclear\nexport\nreset\nmem\nps\nexit\n");
-        } else if (!strcmp(input, "ls")) {
+            printf(
+                "Commands:\n"
+                "General:\n"
+                "  help        - Show this help message\n"
+                "  clear       - Clear the screen\n"
+                "  exit        - Exit MiniOS\n"
+                "  time        - Show current time\n"
+                "  version     - Show system version\n"
+                "  date        - Show current date\n"
+                "\nFile Operations:\n"
+                "  touch       - Create an empty file\n"
+                "  cat         - Display file contents\n"
+                "  copy        - Copy a file\n"
+                "  move        - Move or rename a file\n"
+                "  delete      - Delete a file\n"
+                "  rename      - Rename a file\n"
+                "  write       - Write content to a file\n"
+                "  read        - Read a file\n"
+                "  delete      - Delete a file\n"
+                "  edit        - Edit a file\n"
+                "  info        - Show file metadata\n"
+                "  search      - Search keyword in files\n"
+                "\nDirectory Operations:\n"
+                "  mkdir/md    - Create a directory\n"
+                "  rmdir/rm -r - Remove a directory\n"
+                "  cd          - Change directory\n"
+                    "  ls      - List directory contents\n"
+                "\nMemory & Process:\n"
+                "  mem         - Show memory status\n"
+                "  ps          - List running processes\n"
+                "\nSystem & History:\n"
+                "  history     - Show command history\n"
+                "  export      - Files are auto-saved\n"
+                //"  reset       - Clear all files\n"
+            );
+        }    
+        else if (!strcmp(input, "ls")) {
             fs_list();
         } else if (!strcmp(input, "history")) {
             show_history();
@@ -65,7 +99,9 @@ void shell() {
             arg1[strcspn(arg1, "\n")] = 0;
 
             fs_edit(arg1);
-        } else if (!strcmp(input, "search")) {
+        } else if (strcmp(input, "time") == 0)
+            cmd_time();
+        else if (!strcmp(input, "search")) {
             printf("Keyword: ");
             fgets(arg1, sizeof(arg1), stdin);
             arg1[strcspn(arg1, "\n")] = 0;
@@ -89,10 +125,45 @@ void shell() {
             fs_info(arg1);
         } else if (!strcmp(input, "export")) {
             printf("Files are already saved to disk automatically.\n");
-        } else if (!strcmp(input, "reset")) {
+        } /*else if (!strcmp(input, "reset")) {
             fs_clear_all();
-        } else {
+        } */
+
+        else if (sscanf(input, "touch %s", arg1) == 1)
+            fs_touch(arg1);
+        else if (strcmp(input, "touch") == 0)
+            printf("Usage: touch <filename>\n");
+
+        else if (sscanf(input, "cat %s", arg1) == 1 || sscanf(input, "type %s", arg1) == 1)
+            fs_cat(arg1);
+        else if (strcmp(input, "cat") == 0 || strcmp(input, "type") == 0)
+            printf("Usage: cat <filename>\n");
+
+        else if (sscanf(input, "copy %s %s", arg1, arg2) == 2 || sscanf(input, "cp %s %s", arg1, arg2) == 2)
+            fs_copy(arg1, arg2);
+        else if (strcmp(input, "copy") == 0 || strcmp(input, "cp") == 0)
+            printf("Usage: copy <source> <destination>\n");
+
+        else if (sscanf(input, "move %s %s", arg1, arg2) == 2 || sscanf(input, "mv %s %s", arg1, arg2) == 2)
+            fs_move(arg1, arg2);
+        else if (strcmp(input, "move") == 0 || strcmp(input, "mv") == 0)
+            printf("Usage: move <source> <destination>\n");
+
+        else if (sscanf(input, "mkdir %s", arg1) == 1 || sscanf(input, "md %s", arg1) == 1)
+            fs_mkdir(arg1);
+        else if (strcmp(input, "mkdir") == 0 || strcmp(input, "md") == 0)
+            printf("Usage: mkdir <directory>\n");
+
+        else if (sscanf(input, "rmdir %s", arg1) == 1 || sscanf(input, "rm -r %s", arg1) == 1)
+            fs_rmdir(arg1);
+        else if (strcmp(input, "rmdir") == 0 || strcmp(input, "rm -r") == 0)
+            printf("Usage: rmdir <directory>\n");
+
+        else if (sscanf(input, "cd %s", arg1) == 1)
+            fs_cd(arg1);
+        else if (strcmp(input, "cd") == 0)
+            printf("Usage: cd <directory>\n");
+        else
             printf("Unknown command.\n");
-        }
     }
 }
