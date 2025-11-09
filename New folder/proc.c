@@ -10,17 +10,6 @@ void proc_init() {
     proc_count = 0;
 }
 
-process* proc_get_all() {
-    return procs;
-}
-
-int proc_get_count() {
-    return proc_count;
-}
-
-process* proc_get_all();
-int proc_get_count();
-
 void run_simulated_process(const char* name) {
     for (int i = 0; i < MAX_PROCS; i++) {
         if (strcmp(procs[i].name, name) == 0 && procs[i].state == READY) {

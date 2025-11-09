@@ -11,10 +11,16 @@
 #include "mm.h"
 #include "proc.h"
 
-void (*get_task(const char* name))();
 
 void task_hello() {
     printf("Hello from MiniOS!\n");
+}
+
+void task_counter() {
+    for (int i = 1; i <= 5; i++) {
+        printf("Counter: %d\n", i);
+        sleep(1);
+    }
 }
 
 void task_ping() {
@@ -22,8 +28,10 @@ void task_ping() {
     system("ping -c 3 127.0.0.1");
 }
 
+// Dispatcher: maps process name to entry function
 void (*get_task(const char* name))() {
     if (strcmp(name, "hello") == 0) return task_hello;
+    if (strcmp(name, "counter") == 0) return task_counter;
     if (strcmp(name, "ping") == 0) return task_ping;
     return NULL;
 }
@@ -197,22 +205,48 @@ void shell() {
 
 
 
-else if (strncmp(input, "run ", 4) == 0) {
-    char *cmd = input + 4;
-    pid_t pid = fork();
-    if (pid == 0) {
-        execl("/bin/sh", "sh", "-c", cmd, NULL);
-        perror("exec failed");
-        exit(1);
-    } else if (pid > 0) {
-        printf("Started process: %s with PID %d\n", cmd, pid);
-        proc_create(cmd, NULL);
-        int status;
-        waitpid(pid, &status, 0);  // Wait for child to finish
-    } else {
-        perror("fork failed");
+else if (!strcmp(input, "run")) {
+    proc_run(); // run all simulated READY processes
+}
+else if (sscanf(input, "run %s", arg1) == 1) {
+    // Try to run a simulated process first
+    int found = 0;
+    for (int i = 0; i < MAX_PROCS; i++) {
+        if (strcmp(procs[i].name, arg1) == 0 && procs[i].state == READY) {
+            run_simulated_process(arg1);
+            found = 1;
+            break;
+        }
     }
-}else if (!strcmp(input, "spawn")) {
+    if (!found) {
+        // Fallback to real system command
+        pid_t pid = fork();
+        if (pid == 0) {
+            execl("/bin/sh", "sh", "-c", arg1, NULL);
+            perror("exec failed");
+            exit(1);
+        } else if (pid > 0) {
+            printf("Started system command: %s with PID %d\n", arg1, pid);
+            proc_create(arg1, NULL);
+            int status;
+            waitpid(pid, &status, 0);
+        } else {
+            perror("fork failed");
+        }
+    }
+}
+
+else if (sscanf(input, "spawn %s", arg1) == 1) {
+    // Direct usage: spawn <name>
+    void (*entry)() = get_task(arg1);  // optional task binding
+    int pid = proc_create(arg1, entry);
+    if (pid >= 0) {
+        printf("Spawned process '%s' with PID %d\n", arg1, pid);
+    } else {
+        printf("Error: Could not spawn process. Table may be full.\n");
+    }
+} else if (!strcmp(input, "spawn")) {
+    // Interactive fallback
     printf("Process name: ");
     fgets(arg1, sizeof(arg1), stdin);
     arg1[strcspn(arg1, "\n")] = 0;
@@ -222,7 +256,7 @@ else if (strncmp(input, "run ", 4) == 0) {
         continue;
     }
 
-    void (*entry)() = get_task(arg1);  // auto-bind task
+    void (*entry)() = get_task(arg1);
     int pid = proc_create(arg1, entry);
     if (pid >= 0) {
         printf("Spawned process '%s' with PID %d\n", arg1, pid);
