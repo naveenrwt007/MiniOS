@@ -212,20 +212,29 @@ else if (strncmp(input, "run ", 4) == 0) {
     } else {
         perror("fork failed");
     }
-}else if (!strcmp(input, "spawn")) {
-    printf("Process name: ");
-    fgets(arg1, sizeof(arg1), stdin);
-    arg1[strcspn(arg1, "\n")] = 0;
-
-    if (strlen(arg1) == 0) {
-        printf("Error: Process name cannot be empty.\n");
-        continue;
+}else if (sscanf(input, "spawn %s", arg1) == 1) {
+    int background = 0;
+    size_t len = strlen(arg1);
+    if (len > 0 && arg1[len - 1] == '&') {
+        background = 1;
+        arg1[len - 1] = '\0'; // remove '&'
+        while (len > 1 && arg1[len - 2] == ' ') {
+            arg1[len - 2] = '\0'; // trim trailing space
+            len--;
+        }
     }
 
-    void (*entry)() = get_task(arg1);  // auto-bind task
+    void (*entry)() = get_task(arg1);
     int pid = proc_create(arg1, entry);
     if (pid >= 0) {
-        printf("Spawned process '%s' with PID %d\n", arg1, pid);
+        printf("Spawned process '%s' with PID %d%s\n", arg1, pid, background ? " [background]" : "");
+        if (background && entry) {
+            // Run immediately in background
+            if (fork() == 0) {
+                entry();
+                exit(0);
+            }
+        }
     } else {
         printf("Error: Could not spawn process. Table may be full.\n");
     }

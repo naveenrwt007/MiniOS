@@ -13,3 +13,5 @@ void proc_init();
 int proc_create(const char* name, void (*entry)());
 void proc_run();
 void proc_list();
+process* proc_get_all();
+int proc_get_count();
