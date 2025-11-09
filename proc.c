@@ -16,7 +16,7 @@ int proc_create(const char* name, void (*entry)()) {
     p->pid = next_pid++;
     strcpy(p->name, name);
     p->state = READY;
-    p->entry_point = entry;
+    p->entry_point = entry; // may be NULL for real processes
     return p->pid;
 }
 

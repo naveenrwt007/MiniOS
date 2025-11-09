@@ -1,5 +1,10 @@
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <sys/types.h>
 #include "fs.h"
 #include "history.h"
 #include "utils.h"
@@ -24,7 +29,7 @@ void shell() {
                 "  help        - Show this help message\n"
                 "  clear       - Clear the screen\n"
                 "  exit        - Exit MiniOS\n"
-                "  time        - Show current time\n"
+                "  date        - Show current time\n"
                 "  version     - Show system version\n"
                 "  date        - Show current date\n"
                 "\nFile Operations:\n"
@@ -36,7 +41,6 @@ void shell() {
                 "  rename      - Rename a file\n"
                 "  write       - Write content to a file\n"
                 "  read        - Read a file\n"
-                "  delete      - Delete a file\n"
                 "  edit        - Edit a file\n"
                 "  info        - Show file metadata\n"
                 "  search      - Search keyword in files\n"
@@ -44,14 +48,16 @@ void shell() {
                 "  mkdir/md    - Create a directory\n"
                 "  rmdir/rm -r - Remove a directory\n"
                 "  cd          - Change directory\n"
-                    "  ls      - List directory contents\n"
+                "  ls          - List directory contents\n"
                 "\nMemory & Process:\n"
                 "  mem         - Show memory status\n"
                 "  ps          - List running processes\n"
+                "  spawn       - Create a simulated process (name only)\n"
+                "  run <cmd>   - Run a real system command (e.g., run ls -l)\n"
                 "\nSystem & History:\n"
                 "  history     - Show command history\n"
                 "  export      - Files are auto-saved\n"
-                //"  reset       - Clear all files\n"
+                "  reset       - Clear all files\n"
             );
         }    
         else if (!strcmp(input, "ls")) {
@@ -66,20 +72,21 @@ void shell() {
             mm_status();
         } else if (!strcmp(input, "ps")) {
             proc_list();
-        } else if (!strcmp(input, "write")) {
+        }else if (!strcmp(input, "write")) {
             printf("Filename: ");
             fgets(arg1, sizeof(arg1), stdin);
             arg1[strcspn(arg1, "\n")] = 0;
-
             if (strlen(arg1) == 0) {
                 printf("Error: Filename cannot be empty.\n");
                 continue;
             }
-
+            if (fs_find(arg1) >= 0) {
+                printf("File already exists.\n");
+                continue;
+            }
             printf("Content: ");
             fgets(arg2, sizeof(arg2), stdin);
             arg2[strcspn(arg2, "\n")] = 0;
-
             fs_write(arg1, arg2);
         } else if (!strcmp(input, "read")) {
             printf("Filename: ");
@@ -99,8 +106,14 @@ void shell() {
             arg1[strcspn(arg1, "\n")] = 0;
 
             fs_edit(arg1);
-        } else if (strcmp(input, "time") == 0)
-            cmd_time();
+        } else if (!strcmp(input, "date")) {
+            time_t now = time(NULL) + (5.5 * 3600);
+            struct tm *t = gmtime(&now);
+            char buffer[100];
+            strftime(buffer, sizeof(buffer), "%A, %d %B %Y, %I:%M:%S %p", t);
+            printf("Current date and time: %s\n", buffer);
+        } else if (!strcmp(input, "version")) 
+            printf("MiniOS Version 1.0.0\n");
         else if (!strcmp(input, "search")) {
             printf("Keyword: ");
             fgets(arg1, sizeof(arg1), stdin);
@@ -125,9 +138,16 @@ void shell() {
             fs_info(arg1);
         } else if (!strcmp(input, "export")) {
             printf("Files are already saved to disk automatically.\n");
-        } /*else if (!strcmp(input, "reset")) {
-            fs_clear_all();
-        } */
+        } else if (!strcmp(input, "reset")) {
+            printf("Are you sure you want to clear all files? (y/n): ");
+            /*char confirm[10];
+            fgets(confirm, sizeof(confirm), stdin);
+            if (confirm[0] == 'y' || confirm[0] == 'Y') {
+                fs_clear_all();
+            } else {
+                printf("Reset cancelled.\n");
+            }*/
+        } 
 
         else if (sscanf(input, "touch %s", arg1) == 1)
             fs_touch(arg1);
@@ -163,6 +183,59 @@ void shell() {
             fs_cd(arg1);
         else if (strcmp(input, "cd") == 0)
             printf("Usage: cd <directory>\n");
+
+
+
+else if (strncmp(input, "run ", 4) == 0) {
+    char *cmd = input + 4;
+    pid_t pid = fork();
+    if (pid == 0) {
+        execl("/bin/sh", "sh", "-c", cmd, NULL);
+        perror("exec failed");
+        exit(1);
+    } else if (pid > 0) {
+        printf("Started process: %s with PID %d\n", cmd, pid);
+        proc_create(cmd, NULL);
+        int status;
+        waitpid(pid, &status, 0);  // Wait for child to finish
+    } else {
+        perror("fork failed");
+    }
+}else if (!strcmp(input, "spawn")) {
+    printf("Process name: ");
+    fgets(arg1, sizeof(arg1), stdin);
+    arg1[strcspn(arg1, "\n")] = 0;
+
+    if (strlen(arg1) == 0) {
+        printf("Error: Process name cannot be empty.\n");
+        continue;
+    }
+
+    int pid = proc_create(arg1, NULL); // NULL if no entry function
+    if (pid >= 0) {
+        printf("Spawned process '%s' with PID %d\n", arg1, pid);
+    } else {
+        printf("Error: Could not spawn process. Table may be full.\n");
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         else
             printf("Unknown command.\n");
     }

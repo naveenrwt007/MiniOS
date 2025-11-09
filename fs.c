@@ -12,6 +12,7 @@
 
 char *files[MAX_FILES];
 char *file_data[MAX_FILES];
+int file_count = 0;
 
 void fs_init() {
     for (int i = 0; i < MAX_FILES; i++) {
@@ -51,27 +52,31 @@ int fs_find(const char *name) {
 
 void fs_write(const char *name, const char *data) {
     int idx = fs_find(name);
-    FILE *fp = fopen(name, "w");
-    if (fp) {
-        fputs(data, fp);
-        fclose(fp);
-    }
 
     if (idx >= 0) {
-        file_data[idx] = safe_strdup(data);
-        printf("File updated.\n");
+        printf("File already exists.\n");
         return;
     }
 
+    if (file_count >= MAX_FILES) {
+        printf("File system full.\n");
+        return;
+    }
     for (int i = 0; i < MAX_FILES; i++) {
         if (!files[i]) {
             files[i] = safe_strdup(name);
             file_data[i] = safe_strdup(data);
-            printf("File created.\n");
-            return;
+            break;
         }
     }
-    printf("File system full.\n");
+    FILE *fp = fopen(name, "w");
+    if (fp) {
+        fputs(data, fp);
+        fclose(fp);
+        printf("File created.\n");
+    } else {
+        printf("Error: Could not write to disk.\n");
+    }
 }
 
 void fs_read(const char *name) {
@@ -92,15 +97,6 @@ void fs_list() {
         }
     }
     if (!found) printf("No files found.\n");
-}
-
-void cmd_time() {
-    time_t rawtime = time(NULL);
-    rawtime += 19800; 
-    struct tm *tm_info = gmtime(&rawtime);
-    char buffer[64];
-    strftime(buffer, sizeof(buffer), "%H:%M:%S", tm_info);
-    printf("Time (IST): %s\n", buffer);
 }
 
 void fs_delete(const char *name) {
