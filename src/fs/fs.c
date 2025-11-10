@@ -4,8 +4,9 @@
 #include <sys/stat.h>
 #include <time.h>
 #include "fs.h"
-#include "utils.h"
+#include "utils/utils.h"
 #include <unistd.h>
+#include "mm/mm.h"
 
 #define MAX_FILES 100
 #define MAX_CONTENT 2000
@@ -34,8 +35,8 @@ void fs_init() {
                 buffer[bytes] = '\0';
                 fclose(fp);
 
-                files[count] = safe_strdup(entry->d_name);
-                file_data[count] = safe_strdup(buffer);
+                files[count] = mm_strdup(entry->d_name);
+                file_data[count] = mm_strdup(buffer);
                 count++;
             }
         }
@@ -64,8 +65,8 @@ void fs_write(const char *name, const char *data) {
     }
     for (int i = 0; i < MAX_FILES; i++) {
         if (!files[i]) {
-            files[i] = safe_strdup(name);
-            file_data[i] = safe_strdup(data);
+            files[i] = mm_strdup(name);
+            file_data[i] = mm_strdup(data);
             break;
         }
     }
@@ -98,13 +99,19 @@ void fs_list() {
     }
     if (!found) printf("No files found.\n");
 }
-
 void fs_delete(const char *name) {
     int idx = fs_find(name);
     if (idx >= 0) {
-        remove(name);
-        files[idx] = NULL;
-        file_data[idx] = NULL;
+        remove(name); 
+        if (files[idx]) {
+            mm_free(files[idx]);
+            files[idx] = NULL;
+        }
+        if (file_data[idx]) {
+            mm_free(file_data[idx]);
+            file_data[idx] = NULL;
+        }
+
         printf("File deleted.\n");
     } else {
         printf("File not found.\n");

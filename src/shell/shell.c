@@ -5,11 +5,11 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <sys/types.h>
-#include "fs.h"
+#include "fs/fs.h"
 #include "history.h"
-#include "utils.h"
-#include "mm.h"
-#include "proc.h"
+#include "utils/utils.h"
+#include "mm/mm.h"
+#include "proc/proc.h"
 
 void (*get_task(const char* name))();
 

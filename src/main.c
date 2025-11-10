@@ -1,9 +1,9 @@
 
 #include <stdio.h>
-#include "fs.h"
-#include "shell.h"
-#include "proc.h"
-#include "mm.h"
+#include "fs/fs.h"
+#include "shell/shell.h"
+#include "proc/proc.h"
+#include "mm/mm.h"
 
 void shell_task() {
     shell();

@@ -1,29 +1,22 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -std=c99
-OBJS = main.o fs.o shell.o mm.o proc.o history.o utils.o
+CFLAGS = -Wall -I./src
+OBJDIR = build
+
+MODULES = shell history proc fs mm utils
+OBJS = $(addprefix $(OBJDIR)/, main.o \
+        shell/shell.o shell/history.o \
+        proc/proc.o fs/fs.o mm/mm.o utils/utils.o)
+
+all: MiniOS
+
 MiniOS: $(OBJS)
-	$(CC) $(CFLAGS) -o MiniOS $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $^
 
-main.o: main.c fs.h shell.h mm.h proc.h
-	$(CC) $(CFLAGS) -c main.c
-
-fs.o: fs.c fs.h
-	$(CC) $(CFLAGS) -c fs.c
-
-shell.o: shell.c shell.h fs.h
-	$(CC) $(CFLAGS) -c shell.c
-
-mm.o: mm.c mm.h
-	$(CC) $(CFLAGS) -c mm.c
-
-proc.o: proc.c proc.h
-	$(CC) $(CFLAGS) -c proc.c
+$(OBJDIR)/%.o: src/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f *.o MiniOS
+	rm -rf $(OBJDIR) MiniOS
 
-history.o: history.c history.h
-	$(CC) $(CFLAGS) -c history.c
-
-utils.o: utils.c utils.h
-	$(CC) $(CFLAGS) -c utils.c
+.PHONY: all clean

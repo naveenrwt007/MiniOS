@@ -14,3 +14,20 @@ MiniOS/
 │   └── stdio.c/h           # Minimal C library functions
 ├── Makefile
 └── README.md
+
+
+# MiniOS
+
+MiniOS is a lightweight educational operating system built from scratch in C. It features:
+
+- Modular shell interface
+- Process management
+- File system abstraction
+- Memory management
+- Utilities and history tracking
+
+## Build
+
+```bash
+make
+./minios

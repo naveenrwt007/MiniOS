@@ -43,7 +43,7 @@ void* mm_alloc(size_t size) {
         curr = curr->next;
     }
 
-    return NULL; // No suitable block found
+    return NULL;
 }
 
 void mm_free(void* ptr) {
@@ -76,7 +76,8 @@ void mm_status() {
 
     printf("Heap Blocks:\n");
     while (curr) {
-        printf("  Block %d: %s, Size: %zu bytes\n", block_count++, curr->free ? "Free" : "Used", curr->size);
+        printf("  Block %d: %s, Size: %zu bytes, Addr: %p\n",
+               block_count++, curr->free ? "Free" : "Used", curr->size, (void*)curr);
         if (curr->free)
             free += curr->size;
         else
@@ -88,4 +89,28 @@ void mm_status() {
     printf("Used: %zu bytes\n", used);
     printf("Free: %zu bytes\n", free);
     printf("Total: %zu bytes\n", (size_t)HEAP_SIZE);
+}
+
+char* mm_strdup(const char* src) {
+    size_t len = strlen(src) + 1;
+    char* dest = (char*)mm_alloc(len);
+    if (dest) strcpy(dest, src);
+    return dest;
+}
+
+void mm_reset() {
+    mm_init();
+    printf("Heap reset.\n");
+}
+
+void mm_dump() {
+    Block* curr = free_list;
+    int block_count = 0;
+    printf("Heap Dump:\n");
+    while (curr) {
+        printf("  Block %d: %s, Size: %zu bytes, Addr: %p, Next: %p\n",
+               block_count++, curr->free ? "Free" : "Used", curr->size,
+               (void*)curr, (void*)curr->next);
+        curr = curr->next;
+    }
 }

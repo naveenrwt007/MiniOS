@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "utils.h"
 #include <stdlib.h>
-#include "mm.h"
+#include "mm/mm.h"
 #include <string.h>
 
 char *safe_strdup(const char *src) {
