@@ -30,4 +30,4 @@ MiniOS is a lightweight educational operating system built from scratch in C. It
 
 ```bash
 make
-./minios
+./MiniOS
