@@ -43,38 +43,43 @@ void shell() {
             printf(
                 "Commands:\n"
                 "General:\n"
-                "  help        - Show this help message\n"
-                "  clear       - Clear the screen\n"
-                "  exit        - Exit MiniOS\n"
-                "  date        - Show current time\n"
-                "  version     - Show system version\n"
-                "  date        - Show current date\n"
+                "  help                 - Show this help message\n"
+                "  clear                - Clear the screen\n"
+                "  exit                 - Exit MiniOS\n"
+                "  date                 - Show current time\n"
+                "  version              - Show system version\n"
+                "  date                 - Show current date\n"
                 "\nFile Operations:\n"
-                "  touch       - Create an empty file\n"
-                "  cat         - Display file contents\n"
-                "  copy        - Copy a file\n"
-                "  move        - Move or rename a file\n"
-                "  delete      - Delete a file\n"
-                "  rename      - Rename a file\n"
-                "  write       - Write content to a file\n"
-                "  read        - Read a file\n"
-                "  edit        - Edit a file\n"
-                "  info        - Show file metadata\n"
-                "  search      - Search keyword in files\n"
+                "  touch                - Create an empty file\n"
+                "  cat                  - Display file contents\n"
+                "  copy                 - Copy a file\n"
+                "  move                 - Move or rename a file\n"
+                "  delete               - Delete a file\n"
+                "  rename               - Rename a file\n"
+                "  write                - Write content to a file\n"
+                "  read                 - Read a file\n"
+                "  edit                 - Edit a file\n"
+                "  info                 - Show file metadata\n"
+                "  search               - Search keyword in files\n"
                 "\nDirectory Operations:\n"
-                "  mkdir/md    - Create a directory\n"
-                "  rmdir/rm -r - Remove a directory\n"
-                "  cd          - Change directory\n"
-                "  ls          - List directory contents\n"
+                "  mkdir/md             - Create a directory\n"
+                "  rmdir/rm -r          - Remove a directory\n"
+                "  cd                   - Change directory\n"
+                "  ls                   - List directory contents\n"
                 "\nMemory & Process:\n"
-                "  mem         - Show memory status\n"
-                "  ps          - List running processes\n"
-                "  spawn       - Create a simulated process (name only)\n"
-                "  run <cmd>   - Run a real system command (e.g., run ls -l)\n"
+                "  mem                  - Show memory status\n"
+                "  ps                   - List running processes\n"
+                "  spawn                - Create a simulated process (name only)\n"
+                "  run <cmd>            - Run a real system command (e.g., run ls -l)\n"
                 "\nSystem & History:\n"
-                "  history     - Show command history\n"
-                "  export      - Files are auto-saved\n"
-                "  reset       - Clear all files\n"
+                "  history              - Show command history\n"
+                "  export               - Files are auto-saved\n"
+                "  reset                - Clear all files\n"
+                "\nDeadlock & Resources:\n"
+                "  req <pid> <rid>      - Process requests a resource\n"
+                "  assign <rid> <pid>   - Assign resource to process\n"
+                "  release <rid> <pid>  - Release resource from process\n"
+                "  deadlock             - Check for deadlock in resource graph\n"
             );
         }    
         else if (!strcmp(input, "ls")) {
@@ -158,9 +163,7 @@ void shell() {
         } else if (!strcmp(input, "reset")) {
             printf("If you do this all files will deleted permanently.  ");
             //fs_clear_all();
-        } 
-
-        else if (sscanf(input, "touch %s", arg1) == 1)
+        } else if (sscanf(input, "touch %s", arg1) == 1)
             fs_touch(arg1);
         else if (strcmp(input, "touch") == 0)
             printf("Usage: touch <filename>\n");
@@ -189,74 +192,101 @@ void shell() {
             fs_rmdir(arg1);
         else if (strcmp(input, "rmdir") == 0 || strcmp(input, "rm -r") == 0)
             printf("Usage: rmdir <directory>\n");
-
         else if (sscanf(input, "cd %s", arg1) == 1)
             fs_cd(arg1);
         else if (strcmp(input, "cd") == 0)
             printf("Usage: cd <directory>\n");
-
-
-
-else if (strncmp(input, "run ", 4) == 0) {
-    char *cmd = input + 4;
-    pid_t pid = fork();
-    if (pid == 0) {
-        execl("/bin/sh", "sh", "-c", cmd, NULL);
-        perror("exec failed");
-        exit(1);
-    } else if (pid > 0) {
-        printf("Started process: %s with PID %d\n", cmd, pid);
-        proc_create(cmd, NULL);
-        int status;
-        waitpid(pid, &status, 0);  // Wait for child to finish
-    } else {
-        perror("fork failed");
-    }
-}else if (sscanf(input, "spawn %s", arg1) == 1) {
-    int background = 0;
-    size_t len = strlen(arg1);
-    if (len > 0 && arg1[len - 1] == '&') {
-        background = 1;
-        arg1[len - 1] = '\0'; // remove '&'
-        while (len > 1 && arg1[len - 2] == ' ') {
-            arg1[len - 2] = '\0'; // trim trailing space
-            len--;
-        }
-    }
-
-    void (*entry)() = get_task(arg1);
-    int pid = proc_create(arg1, entry);
-    if (pid >= 0) {
-        printf("Spawned process '%s' with PID %d%s\n", arg1, pid, background ? " [background]" : "");
-        if (background && entry) {
-            // Run immediately in background
-            if (fork() == 0) {
-                entry();
-                exit(0);
+        else if (strncmp(input, "run ", 4) == 0) {
+            char *cmd = input + 4;
+            pid_t pid = fork();
+            if (pid == 0) {
+                execl("/bin/sh", "sh", "-c", cmd, NULL);
+                perror("exec failed");
+                exit(1);
+            } else if (pid > 0) {
+            printf("Started process: %s with PID %d\n", cmd, pid);
+            proc_create(cmd, NULL);
+            int status;
+            waitpid(pid, &status, 0);  // Wait for child to finish
+        } else
+            perror("fork failed");
+        } else if (sscanf(input, "spawn %s", arg1) == 1) {
+            int background = 0;
+            size_t len = strlen(arg1);
+            if (len > 0 && arg1[len - 1] == '&') {
+                background = 1;
+                arg1[len - 1] = '\0'; // remove '&'
+                while (len > 1 && arg1[len - 2] == ' ') {
+                    arg1[len - 2] = '\0'; // trim trailing space
+                    len--;
+                }
             }
-        }
+
+            void (*entry)() = get_task(arg1);
+            int pid = proc_create(arg1, entry);
+            if (pid >= 0) {
+                printf("Spawned process '%s' with PID %d%s\n", arg1, pid, background ? " [background]" : "");
+                if (background && entry) {
+                    // Run immediately in background
+                if (fork() == 0) {
+                    entry();
+                    exit(0);
+                }
+            }
+            } else
+                printf("Error: Could not spawn process. Table may be full.\n");
+        } else if (!strcmp(input, "deadlock")) {
+            if (detect_deadlock())
+                printf("Deadlock detected!\n");
+            else
+                printf("No deadlock.\n");
+        } else if (strncmp(input, "req ", 4) == 0) {
+    int pid, rid;
+    if (sscanf(input + 4, "%d %d", &pid, &rid) == 2) {
+        request_resource(pid, rid);
+        char msg[50];
+        sprintf(msg, "P%d requested R%d\n", pid, rid);
+        printf("%s", msg);
     } else {
-        printf("Error: Could not spawn process. Table may be full.\n");
+        printf("Usage: req <pid> <rid>\n");
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+else if (strncmp(input, "assign ", 7) == 0) {
+    int rid, pid;
+    if (sscanf(input + 7, "%d %d", &rid, &pid) == 2) {
+        assign_resource(rid, pid);
+        char msg[50];
+        sprintf(msg, "R%d assigned to P%d\n", rid, pid);
+        printf("%s", msg);
+    } else {
+        printf("Usage: assign <rid> <pid>\n");
+    }
+}
+else if (strncmp(input, "release ", 8) == 0) {
+    int rid, pid;
+    if (sscanf(input + 8, "%d %d", &rid, &pid) == 2) {
+        release_resource(rid, pid);
+        char msg[50];
+        sprintf(msg, "R%d released from P%d\n", rid, pid);
+        printf("%s", msg);
+    } else {
+        printf("Usage: release <rid> <pid>\n");
+    }
+}
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         else
             printf("Unknown command.\n");
     }
