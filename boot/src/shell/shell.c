@@ -10,7 +10,17 @@
 #include "utils/utils.h"
 #include "mm/mm.h"
 #include "proc/proc.h"
+#include "input.h"
 
+void _start() {
+    char cmd[128];
+    while (1) {
+        vga_print_char('\n');
+        vga_print_char('>');
+        get_input(cmd);
+        // Now parse and execute `cmd`
+    }
+}
 void (*get_task(const char* name))();
 
 void task_hello() {
@@ -48,6 +58,7 @@ void shell() {
                 "  exit                 - Exit MiniOS\n"
                 "  date                 - Show current time\n"
                 "  version              - Show system version\n"
+                "  date                 - Show current date\n"
                 "\nFile Operations:\n"
                 "  touch                - Create an empty file\n"
                 "  cat                  - Display file contents\n"
@@ -227,11 +238,11 @@ void shell() {
                 printf("Spawned process '%s' with PID %d%s\n", arg1, pid, background ? " [background]" : "");
                 if (background && entry) {
                     // Run immediately in background
-                    if (fork() == 0) {
-                        entry();
-                        exit(0);
-                    }
+                if (fork() == 0) {
+                    entry();
+                    exit(0);
                 }
+            }
             } else
                 printf("Error: Could not spawn process. Table may be full.\n");
         } else if (!strcmp(input, "deadlock")) {
@@ -240,33 +251,53 @@ void shell() {
             else
                 printf("No deadlock.\n");
         } else if (strncmp(input, "req ", 4) == 0) {
-            int pid, rid;
-            if (sscanf(input + 4, "%d %d", &pid, &rid) == 2) {
-                request_resource(pid, rid);
-                char msg[50];
-                sprintf(msg, "P%d requested R%d\n", pid, rid);
-                printf("%s", msg);
-            } else
-            printf("Usage: req <pid> <rid>\n");
-        }else if (strncmp(input, "assign ", 7) == 0) {
-            int rid, pid;
-            if (sscanf(input + 7, "%d %d", &rid, &pid) == 2) {
-                assign_resource(rid, pid);
-                char msg[50];
-                sprintf(msg, "R%d assigned to P%d\n", rid, pid);
-                printf("%s", msg);
-            } else 
-                printf("Usage: assign <rid> <pid>\n");
-        } else if (strncmp(input, "release ", 8) == 0) {
-            int rid, pid;
-            if (sscanf(input + 8, "%d %d", &rid, &pid) == 2) {
-                release_resource(rid, pid);
-                char msg[50];
-                sprintf(msg, "R%d released from P%d\n", rid, pid);
-                printf("%s", msg);
-            } else
-                printf("Usage: release <rid> <pid>\n");
-        } else
+    int pid, rid;
+    if (sscanf(input + 4, "%d %d", &pid, &rid) == 2) {
+        request_resource(pid, rid);
+        char msg[50];
+        sprintf(msg, "P%d requested R%d\n", pid, rid);
+        printf("%s", msg);
+    } else {
+        printf("Usage: req <pid> <rid>\n");
+    }
+}
+else if (strncmp(input, "assign ", 7) == 0) {
+    int rid, pid;
+    if (sscanf(input + 7, "%d %d", &rid, &pid) == 2) {
+        assign_resource(rid, pid);
+        char msg[50];
+        sprintf(msg, "R%d assigned to P%d\n", rid, pid);
+        printf("%s", msg);
+    } else {
+        printf("Usage: assign <rid> <pid>\n");
+    }
+}
+else if (strncmp(input, "release ", 8) == 0) {
+    int rid, pid;
+    if (sscanf(input + 8, "%d %d", &rid, &pid) == 2) {
+        release_resource(rid, pid);
+        char msg[50];
+        sprintf(msg, "R%d released from P%d\n", rid, pid);
+        printf("%s", msg);
+    } else {
+        printf("Usage: release <rid> <pid>\n");
+    }
+}
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        else
             printf("Unknown command.\n");
     }
 }

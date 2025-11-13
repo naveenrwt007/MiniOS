@@ -1,4 +1,6 @@
 # MiniOS
+
+A modular shell-based OS interface with Ubuntu-style command handling and screen management.
 MiniOS/
 ├── boot/
 │   └── boot.s              # Assembly bootloader
@@ -30,4 +32,8 @@ MiniOS is a lightweight educational operating system built from scratch in C. It
 
 ```bash
 make
+<<<<<<< HEAD
 ./MiniOS
+=======
+./MiniOS
+>>>>>>> 85a2f76 (Ubuntu Shell Interface)
