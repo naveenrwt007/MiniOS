@@ -41,7 +41,7 @@ gcc -o minios main.c
 ./minios
 
 ## 📁 Project Structure
-
+```
 MiniOS/
 ├── kernel/ # Core OS logic
 ├── memory/ # Memory management
@@ -51,7 +51,7 @@ MiniOS/
 ├── main.c # Entry point
 ├── Makefile # Build file
 └── README.md # Documentation
-
+```
 
 ---
 
