@@ -39,3 +39,15 @@ gcc -o minios main.c
 ### 3. Run the OS
 
 ./minios
+
+## 📁 Project Structure
+
+MiniOS/
+├── kernel/ # Core OS logic
+├── memory/ # Memory management
+├── filesystem/ # File system
+├── shell/ # Command-line interface
+├── drivers/ # Hardware interaction
+├── main.c # Entry point
+├── Makefile # Build file
+└── README.md # Documentation
