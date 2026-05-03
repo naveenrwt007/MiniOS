@@ -30,9 +30,12 @@ A basic custom-built operating system with core functionalities like memory mana
 ```bash
 git clone https://github.com/naveenrwt007/MiniOS.git
 cd MiniOS
+```
 
-### Compile
+### 2. Compile the Code
 
-```bash
 gcc -o minios main.c
+
+### 3. Run the OS
+
 ./minios
